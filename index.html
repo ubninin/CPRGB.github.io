@@ -22,7 +22,8 @@
 <button id="aModeButton" class="modeButton" onclick="setMode('A')">a모드</button>
 <button id="bModeButton" class="modeButton" onclick="setMode('B')">b모드</button>
 <button id="cModeButton" class="modeButton" onclick="setMode('C')">c모드</button>
-<button id="dModeButton" class="modeButton" onclick="setMode('D')">d모드</button><br>
+<button id="dModeButton" class="modeButton" onclick="setMode('D')">d모드</button>
+<button id="dModeButton" class="modeButton" onclick="setMode('E')">e모드</button><br>
 
 <!-- id/name 변환 버튼 -->
 <button id="toggleButton" onclick="togglePrefix()">id</button><br>
@@ -183,7 +184,40 @@
 
         return result;
     }
+    //e모드
+    function transformHangulE(text) {
+        let result = '';
 
+        for (let char of text) {
+            const code = char.charCodeAt(0);
+
+            if (code >= 0xAC00 && code <= 0xD7A3) {
+                const tmp = code - 0xAC00;
+                const choIdx = Math.floor(tmp / (21 * 28));
+                const jungIdx = Math.floor((tmp % (21 * 28)) / 28);
+                const jongIdx = tmp % 28;
+
+                const cho = chosungList[choIdx];
+                const jung = jungsungList[jungIdx];
+                const jong = jongsungList[jongIdx];
+
+                if (jong !== '') {
+                    result += char; // 받침 있으면 그대로
+                } else {
+                    if (jung === 'ㅓㅓ') {
+                        result += cho + '7'; // 중성이 ㅓ이면 초성 + '7'
+                    } else {
+                        result += char; // 나머지는 그대로
+                    }
+                }
+            } else {
+                result += char; // 한글이 아니면 그대로
+            }
+        }
+
+        return result;
+    }
+    
     function transformText() {
         let text = document.getElementById('inputText').value;
         let prefix = '';
@@ -201,7 +235,11 @@
         } else if (currentMode === 'D') {
             prefix = isIDPrefix ? "GT : " : "ZETTAR : "; // d모드
             color = '#678900'; // d모드일 때 출력 텍스트 색상
+        } else if (currentMode === 'E') {
+            prefix = isIDPrefix ? "NM : " : "SKYLAR : "; // d모드
+            color = '#005682'; // d모드일 때 출력 텍스트 색상
         }
+
 
         let output = '';
 
@@ -223,12 +261,22 @@
         } else if (currentMode === 'C') {
             output = text.split("\n").map(line => {
                 let transformedLine = transformHangulC(line);
-                transformedLine = transformedLine.replace(/X/g, '!');
+                transformedLine = transformedLine.replace(/B/g, '13')
+                    .replace(/\^\^/g, '8/');
                 return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
             }).join("\n");
         } else if (currentMode === 'D') {
             output = text.split("\n").map(line => {
                 let transformedLine = transformHangulD(line);
+                transformedLine = transformedLine.replace(/\^\^/g, '>8I');
+                return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
+            }).join("\n");
+        } else if (currentMode === 'E') {
+            output = text.split("\n").map(line => {
+                let transformedLine = transformHangulD(line);
+                transformedLine = transformedLine.replace(/t/g, '7')
+                    .replace(/T/g, '7')
+                    .replace(/\^\^/g, '>8<');
                 return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
             }).join("\n");
         }
@@ -248,7 +296,7 @@
         }
     }
 
-    // a모드, b모드, c모드, d모드 설정 함수
+    // a모드, b모드, c모드, d모드, emode 설정 함수
     function setMode(mode) {
         currentMode = mode;
 
@@ -258,22 +306,33 @@
             document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('eModeButton').style.backgroundColor = "#008CBA";
         } else if (mode === 'B') {
             document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('bModeButton').style.backgroundColor = "#4CAF50";
             document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('eModeButton').style.backgroundColor = "#008CBA";
         } else if (mode === 'C') {
             document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('cModeButton').style.backgroundColor = "#4CAF50";
             document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('eModeButton').style.backgroundColor = "#008CBA";
         } else if (mode === 'D') {
             document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
             document.getElementById('dModeButton').style.backgroundColor = "#4CAF50";
+            document.getElementById('eModeButton').style.backgroundColor = "#008CBA";
+        } else if (mode === 'E') {
+            document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('eModeButton').style.backgroundColor = "#4CAF50";
         }
+
     }
 
     // id/name 변경 함수
