@@ -2,23 +2,30 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>WD/SYMETA Transformer</title>
+    <title>Transformer</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         textarea { width: 100%; height: 100px; margin-top: 10px; }
         button { margin-top: 10px; padding: 10px 20px; font-size: 16px; }
-        #output { margin-top: 20px; white-space: pre-line; color: #000056; }
+        #output { margin-top: 20px; white-space: pre-line; }
         #toggleButton { background-color: #4CAF50; color: white; }
+        .modeButton { background-color: #008CBA; color: white; }
     </style>
 </head>
 <body>
 
-<h1>WD</h1>
+<h1>Transformer</h1>
 
 <textarea id="inputText" placeholder="여기에 입력하세요..." onkeydown="handleKeyDown(event)"></textarea><br>
 
-<!-- 토글 버튼 -->
-<button id="toggleButton" onclick="togglePrefix()">id</button>
+<!-- 모드 전환 버튼 -->
+<button id="aModeButton" class="modeButton" onclick="setMode('A')">a모드</button>
+<button id="bModeButton" class="modeButton" onclick="setMode('B')">b모드</button>
+<button id="cModeButton" class="modeButton" onclick="setMode('C')">c모드</button>
+<button id="dModeButton" class="modeButton" onclick="setMode('D')">d모드</button><br>
+
+<!-- id/name 변환 버튼 -->
+<button id="toggleButton" onclick="togglePrefix()">id</button><br>
 
 <div id="output"></div>
 
@@ -33,9 +40,11 @@
                         'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ',
                         'ㅌ', 'ㅍ', 'ㅎ'];
 
-    let isWDMODE = true; // WD 모드가 기본값
+    let currentMode = 'A'; // 기본값 a모드
+    let isIDPrefix = true; // id가 기본값
 
-    function transformHangul(text) {
+    // A 모드의 변환 함수 (WD 모드)
+    function transformHangulA(text) {
         let result = '';
 
         for (let char of text) {
@@ -68,32 +77,170 @@
         return result;
     }
 
+    // B 모드의 변환 함수 (TD 모드)
+    function transformHangulB(text) {
+        let result = '';
+
+        for (let char of text) {
+            const code = char.charCodeAt(0);
+
+            if (code >= 0xAC00 && code <= 0xD7A3) {
+                const tmp = code - 0xAC00;
+                const choIdx = Math.floor(tmp / (21 * 28));
+                const jungIdx = Math.floor((tmp % (21 * 28)) / 28);
+                const jongIdx = tmp % 28;
+
+                const cho = chosungList[choIdx];
+                const jung = jungsungList[jungIdx];
+                const jong = jongsungList[jongIdx];
+
+                if (jong !== '') {
+                    result += char; // 받침 있으면 그대로
+                } else {
+                    if (jung === 'ㅣ') {
+                        result += cho + '!'; // 중성이 ㅣ이면 초성 + '!'
+                    } else {
+                        result += char; // 나머지는 그대로
+                    }
+                }
+            } else {
+                result += char; // 한글이 아니면 그대로
+            }
+        }
+
+        return result;
+    }
+
+    // C 모드의 변환 함수 (ARIEAR 모드)
+    function transformHangulC(text) {
+        let result = [];
+        
+        // 초성 리스트
+        const chosungList = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+        // 중성 리스트
+        const jungsungList = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+        // 종성 리스트
+        const jongsungList = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+    
+        // 한글 문자 변환 함수
+        function compose(cho, jung, jong) {
+            const choIdx = chosungList.indexOf(cho);
+            const jungIdx = jungsungList.indexOf(jung);
+            const jongIdx = jongsungList.indexOf(jong);
+            return String.fromCharCode(0xAC00 + (choIdx * 21 * 28) + (jungIdx * 28) + jongIdx);
+        }
+    
+        // 텍스트 순차적으로 변환
+        for (let char of text) {
+            const code = char.charCodeAt(0);
+    
+            if (code >= 0xAC00 && code <= 0xD7A3) {
+                const tmp = code - 0xAC00;
+                const choIdx = Math.floor(tmp / (21 * 28));
+                const jungIdx = Math.floor((tmp % (21 * 28)) / 28);
+                const jongIdx = tmp % 28;
+    
+                const cho = chosungList[choIdx];
+                const jung = jungsungList[jungIdx];
+                const jong = jongsungList[jongIdx];
+    
+                if (jong !== '') {
+                    result.push(char); // 받침 있으면 그대로
+                } else {
+                    if (cho === 'ㅎ') {
+                        result.push('3' + jung); // ㅎ일 때, '3'과 중성 결합
+                    } else {
+                        result.push(char); // 그 외는 그대로
+                    }
+                }
+            } else if (char === 'b') {
+                // 'B'는 '13'으로 대체
+                result.push('13');
+            } else if (/[a-z]/.test(char)) {
+                // 영어 소문자 처리: 대문자로 변환
+                result.push(char.toUpperCase());
+            } else if (char === 'B') {
+                // 'B'는 '13'으로 대체
+                result.push('13');
+
+            } else {
+                result.push(char); // 한글이 아니면 그대로
+            }
+        }
+    
+        // 결과 문자열 반환
+        return result.join('');
+    }
+
+    // D 모드의 변환 함수
+    function transformHangulD(text) {
+        let result = text;
+        
+        // 문자열의 마지막에 '!' 추가
+        if (result) {
+            result += '!';
+        }
+
+        return result;
+    }
+
     function transformText() {
         let text = document.getElementById('inputText').value;
-        let prefix = isWDMODE ? "WD : " : "SYMETA : "; // 토글 상태에 따라 출력 앞에 붙을 텍스트 결정
+        let prefix = '';
+        let color = '';
 
-        let output = text.split("\n").map(line => {
-            let transformedLine = transformHangul(line);
-            // 추가 변환
-            transformedLine = transformedLine.replace(/t/g, '1-')
-                                               .replace(/T/g, '-1-')
-                                               .replace(/\^\^/g, '!8]');
-            return prefix + transformedLine;
-        }).join("\n");
-
-        // 이전 변환 결과를 유지하고 새로운 결과 추가
-        const outputDiv = document.getElementById('output');
-        if (outputDiv.innerText) {
-            outputDiv.innerText += "\n" + output; // 이전 결과와 이어서 표시
-        } else {
-            outputDiv.innerText = output; // 처음이라면 바로 출력
+        if (currentMode === 'A') {
+            prefix = isIDPrefix ? "WD : " : "SYMETA : "; // a모드
+            color = '#000056'; // a모드일 때 출력 텍스트 색상
+        } else if (currentMode === 'B') {
+            prefix = isIDPrefix ? "TD : " : "TECHNE : "; // b모드
+            color = '#008282'; // b모드일 때 출력 텍스트 색상
+        } else if (currentMode === 'C') {
+            prefix = isIDPrefix ? "AA : " : "ARIEAR : "; // c모드
+            color = '#a10000'; // c모드일 때 출력 텍스트 색상
+        } else if (currentMode === 'D') {
+            prefix = isIDPrefix ? "GT : " : "ZETTAR : "; // d모드
+            color = '#678900'; // d모드일 때 출력 텍스트 색상
         }
+
+        let output = '';
+
+        if (currentMode === 'A') {
+            output = text.split("\n").map(line => {
+                let transformedLine = transformHangulA(line);
+                transformedLine = transformedLine.replace(/t/g, '1-')
+                    .replace(/T/g, '-1-')
+                    .replace(/\^\^/g, '!8]');
+                return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
+            }).join("\n");
+        } else if (currentMode === 'B') {
+            output = text.split("\n").map(line => {
+                let transformedLine = transformHangulB(line);
+                transformedLine = transformedLine.replace(/l/g, '!')
+                    .replace(/\^\^/g, '>||3');
+                return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
+            }).join("\n");
+        } else if (currentMode === 'C') {
+            output = text.split("\n").map(line => {
+                let transformedLine = transformHangulC(line);
+                transformedLine = transformedLine.replace(/X/g, '!');
+                return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
+            }).join("\n");
+        } else if (currentMode === 'D') {
+            output = text.split("\n").map(line => {
+                let transformedLine = transformHangulD(line);
+                return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
+            }).join("\n");
+        }
+
+        // 출력 결과 표시
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerHTML += output + "<br>"; // 새로 출력된 내용만 HTML로 추가
 
         // 입력창 초기화
         document.getElementById('inputText').value = "";
     }
 
-    // 엔터키 입력 시 변환하기 함수 호출
     function handleKeyDown(event) {
         if (event.key === 'Enter') {
             event.preventDefault();  // 기본 엔터키 동작 (줄바꿈) 방지
@@ -101,13 +248,40 @@
         }
     }
 
-    // 토글 버튼 클릭 시 모드 변경 함수
+    // a모드, b모드, c모드, d모드 설정 함수
+    function setMode(mode) {
+        currentMode = mode;
+
+        // 버튼 텍스트 변경
+        if (mode === 'A') {
+            document.getElementById('aModeButton').style.backgroundColor = "#4CAF50";
+            document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+        } else if (mode === 'B') {
+            document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('bModeButton').style.backgroundColor = "#4CAF50";
+            document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+        } else if (mode === 'C') {
+            document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('cModeButton').style.backgroundColor = "#4CAF50";
+            document.getElementById('dModeButton').style.backgroundColor = "#008CBA";
+        } else if (mode === 'D') {
+            document.getElementById('aModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('bModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('cModeButton').style.backgroundColor = "#008CBA";
+            document.getElementById('dModeButton').style.backgroundColor = "#4CAF50";
+        }
+    }
+
+    // id/name 변경 함수
     function togglePrefix() {
-        isWDMODE = !isWDMODE; // 모드 변경
-        document.getElementById('toggleButton').textContent = isWDMODE ? "id" : "name";
+        isIDPrefix = !isIDPrefix; // id/name 전환
+        document.getElementById('toggleButton').textContent = isIDPrefix ? "id" : "name";
     }
 </script>
 
 </body>
 </html>
-
