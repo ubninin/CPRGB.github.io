@@ -1,1 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>WD/SYMETA Transformer</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        textarea { width: 100%; height: 100px; margin-top: 10px; }
+        button { margin-top: 10px; padding: 10px 20px; font-size: 16px; }
+        #output { margin-top: 20px; white-space: pre-line; color: #000056; }
+        #toggleButton { background-color: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+
+<h1>WD</h1>
+
+<textarea id="inputText" placeholder="여기에 입력하세요..." onkeydown="handleKeyDown(event)"></textarea><br>
+
+<!-- 토글 버튼 -->
+<button id="toggleButton" onclick="togglePrefix()">id</button>
+
+<div id="output"></div>
+
+<script>
+    const chosungList = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
+                        'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+    const jungsungList = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ',
+                        'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ',
+                        'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+    const jongsungList = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ',
+                        'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ',
+                        'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ',
+                        'ㅌ', 'ㅍ', 'ㅎ'];
+
+    let isWDMODE = true; // WD 모드가 기본값
+
+    function transformHangul(text) {
+        let result = '';
+
+        for (let char of text) {
+            const code = char.charCodeAt(0);
+
+            if (code >= 0xAC00 && code <= 0xD7A3) {
+                const tmp = code - 0xAC00;
+                const choIdx = Math.floor(tmp / (21 * 28));
+                const jungIdx = Math.floor((tmp % (21 * 28)) / 28);
+                const jongIdx = tmp % 28;
+
+                const cho = chosungList[choIdx];
+                const jung = jungsungList[jungIdx];
+                const jong = jongsungList[jongIdx];
+
+                if (jong !== '') {
+                    result += char; // 받침 있으면 그대로
+                } else {
+                    if (jung === 'ㅏ') {
+                        result += cho + '1-'; // 중성이 ㅏ이면 초성 + '1-'
+                    } else {
+                        result += char; // 나머지는 그대로
+                    }
+                }
+            } else {
+                result += char; // 한글이 아니면 그대로
+            }
+        }
+
+        return result;
+    }
+
+    function transformText() {
+        let text = document.getElementById('inputText').value;
+        let prefix = isWDMODE ? "WD : " : "SYMETA : "; // 토글 상태에 따라 출력 앞에 붙을 텍스트 결정
+
+        let output = text.split("\n").map(line => {
+            let transformedLine = transformHangul(line);
+            // 추가 변환
+            transformedLine = transformedLine.replace(/t/g, '1-')
+                                               .replace(/T/g, '-1-')
+                                               .replace(/\^\^/g, '!8]');
+            return prefix + transformedLine;
+        }).join("\n");
+
+        // 이전 변환 결과를 유지하고 새로운 결과 추가
+        const outputDiv = document.getElementById('output');
+        if (outputDiv.innerText) {
+            outputDiv.innerText += "\n" + output; // 이전 결과와 이어서 표시
+        } else {
+            outputDiv.innerText = output; // 처음이라면 바로 출력
+        }
+
+        // 입력창 초기화
+        document.getElementById('inputText').value = "";
+    }
+
+    // 엔터키 입력 시 변환하기 함수 호출
+    function handleKeyDown(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();  // 기본 엔터키 동작 (줄바꿈) 방지
+            transformText();         // 변환 함수 호출
+        }
+    }
+
+    // 토글 버튼 클릭 시 모드 변경 함수
+    function togglePrefix() {
+        isWDMODE = !isWDMODE; // 모드 변경
+        document.getElementById('toggleButton').textContent = isWDMODE ? "id" : "name";
+    }
+</script>
+
+</body>
+</html>
 
