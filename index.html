@@ -277,6 +277,7 @@
                 let transformedLine = transformHangulE(line);
                 transformedLine = transformedLine.replace(/t/g, '7')
                     .replace(/T/g, '7')
+                    .replace(/ㅓ/g, '7')
                     .replace(/\^\^/g, '>8<');
                 return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
             }).join("\n");
