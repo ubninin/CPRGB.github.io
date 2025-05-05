@@ -274,7 +274,7 @@
             }).join("\n");
         } else if (currentMode === 'E') {
             output = text.split("\n").map(line => {
-                let transformedLine = transformHangulD(line);
+                let transformedLine = transformHangulE(line);
                 transformedLine = transformedLine.replace(/t/g, '7')
                     .replace(/T/g, '7')
                     .replace(/\^\^/g, '>8<');
