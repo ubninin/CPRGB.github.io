@@ -262,7 +262,8 @@
             output = text.split("\n").map(line => {
                 let transformedLine = transformHangulC(line);
                 transformedLine = transformedLine.replace(/B/g, '13')
-                    .replace(/\^\^/g, '8/');
+                    .replace(/\^\^/g, '8/')
+                    .replace(/ㅎ/g, '3');
                 return `<span style="color: ${color}">${prefix + transformedLine}</span>`;
             }).join("\n");
         } else if (currentMode === 'D') {
